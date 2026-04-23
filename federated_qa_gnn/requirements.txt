@@ -1,0 +1,10 @@
+transformers==4.40.0
+peft==0.10.0
+torch>=2.1.0
+torch-geometric
+rouge_score
+bert_score
+nltk
+accelerate
+sentencepiece
+numpy
