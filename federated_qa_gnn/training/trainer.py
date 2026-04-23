@@ -44,7 +44,13 @@ class LocalTrainer:
         """
         cfg = self.config
         device = client.device
-        use_amp = device.type == "cuda"
+        # Use BF16 autocast on GPUs that support it (A100/H100).
+        # FP16 causes T5 attention logits to overflow; BF16 has the same
+        # exponent range as FP32 and does not. On T4 (no BF16), use_amp=False
+        # and training runs in stable FP32. GradScaler is only for FP16, so
+        # it is always disabled here.
+        use_amp = device.type == "cuda" and torch.cuda.is_bf16_supported()
+        pin_mem = device.type == "cuda"
 
         train_loader = DataLoader(
             QADataset(
@@ -56,7 +62,7 @@ class LocalTrainer:
             batch_size=cfg.batch_size,
             shuffle=True,
             num_workers=2,
-            pin_memory=use_amp,
+            pin_memory=pin_mem,
         )
         val_loader = DataLoader(
             QADataset(
@@ -68,7 +74,7 @@ class LocalTrainer:
             batch_size=cfg.batch_size,
             shuffle=False,
             num_workers=2,
-            pin_memory=use_amp,
+            pin_memory=pin_mem,
         )
 
         # Build parameter groups
@@ -91,7 +97,7 @@ class LocalTrainer:
             optimizer, num_warmup_steps=warmup_steps, num_training_steps=total_steps
         )
 
-        scaler = torch.amp.GradScaler("cuda", enabled=use_amp)
+        scaler = torch.amp.GradScaler("cuda", enabled=False)
 
         # Step 1 — refresh effective weight stats before training starts
         refresh_graph_features(
@@ -134,7 +140,7 @@ class LocalTrainer:
                     )
 
                     # Step 4 — LM forward under autocast (FiLM hooks fire here)
-                    with torch.amp.autocast("cuda", enabled=use_amp):
+                    with torch.amp.autocast("cuda", enabled=use_amp, dtype=torch.bfloat16):
                         outputs = client.client_model.forward(
                             input_ids=input_ids,
                             attention_mask=attention_mask,
@@ -195,7 +201,7 @@ class LocalTrainer:
             attention_mask = batch["attention_mask"].to(device)
             labels = batch["labels"].to(device)
 
-            with torch.amp.autocast("cuda", enabled=use_amp):
+            with torch.amp.autocast("cuda", enabled=use_amp, dtype=torch.bfloat16):
                 outputs = client.client_model.forward(
                     input_ids=input_ids,
                     attention_mask=attention_mask,
