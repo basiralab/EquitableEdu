@@ -61,6 +61,13 @@ class ClientModel(nn.Module):
             target_modules=lora_target_modules,
         )
         self.model = get_peft_model(base_model, lora_cfg)
+
+        # LoRA adapters inherit FP16 from the base model. GradScaler requires
+        # optimizer parameters to be FP32, so cast only the trainable weights.
+        for param in self.model.parameters():
+            if param.requires_grad:
+                param.data = param.data.float()
+
         self.model.to(device)
 
         # Detect LED
