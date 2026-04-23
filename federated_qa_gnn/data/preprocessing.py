@@ -13,9 +13,10 @@ def load_json(path: Path) -> List[Dict[str, Any]]:
     """
     Load a list of JSON objects from disk.
 
-    Accepts both:
+    Accepts:
     - A JSON array  ([{...}, {...}, ...])
-    - JSONL format  (one JSON object per line, blank lines ignored)
+    - Concatenated JSON objects, each optionally pretty-printed across multiple
+      lines, separated by any amount of whitespace (blank lines between objects)
     """
     if not path.exists():
         raise FileNotFoundError(f"Data file not found: {path}")
@@ -29,19 +30,27 @@ def load_json(path: Path) -> List[Dict[str, Any]]:
         try:
             return json.loads(raw)
         except json.JSONDecodeError:
-            pass  # fall through to JSONL
+            pass  # fall through to streaming parse
 
-    # JSONL: parse each non-empty line independently
+    # Streaming parse: extract one complete JSON object at a time.
+    # Works for single-line JSONL and multi-line pretty-printed objects alike.
+    decoder = json.JSONDecoder()
     records: List[Dict[str, Any]] = []
-    for lineno, line in enumerate(raw.splitlines(), 1):
-        line = line.strip()
-        if not line:
-            continue
+    idx = 0
+    n = len(raw)
+    while idx < n:
+        # Skip inter-object whitespace
+        while idx < n and raw[idx] in " \t\n\r":
+            idx += 1
+        if idx >= n:
+            break
         try:
-            records.append(json.loads(line))
+            obj, end_idx = decoder.raw_decode(raw, idx)
+            records.append(obj)
+            idx = end_idx
         except json.JSONDecodeError as exc:
             raise json.JSONDecodeError(
-                f"Invalid JSON on line {lineno} of {path}: {exc.msg}",
+                f"Invalid JSON starting at position {idx} of {path}: {exc.msg}",
                 exc.doc,
                 exc.pos,
             ) from exc
