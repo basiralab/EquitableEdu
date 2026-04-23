@@ -10,11 +10,42 @@ logger = logging.getLogger("federated_qa")
 
 
 def load_json(path: Path) -> List[Dict[str, Any]]:
-    """Load a JSON array from disk."""
+    """
+    Load a list of JSON objects from disk.
+
+    Accepts both:
+    - A JSON array  ([{...}, {...}, ...])
+    - JSONL format  (one JSON object per line, blank lines ignored)
+    """
     if not path.exists():
         raise FileNotFoundError(f"Data file not found: {path}")
-    with open(path, "r", encoding="utf-8") as f:
-        return json.load(f)
+
+    raw = path.read_text(encoding="utf-8").strip()
+    if not raw:
+        return []
+
+    # Try standard JSON array first
+    if raw.startswith("["):
+        try:
+            return json.loads(raw)
+        except json.JSONDecodeError:
+            pass  # fall through to JSONL
+
+    # JSONL: parse each non-empty line independently
+    records: List[Dict[str, Any]] = []
+    for lineno, line in enumerate(raw.splitlines(), 1):
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            records.append(json.loads(line))
+        except json.JSONDecodeError as exc:
+            raise json.JSONDecodeError(
+                f"Invalid JSON on line {lineno} of {path}: {exc.msg}",
+                exc.doc,
+                exc.pos,
+            ) from exc
+    return records
 
 
 def balance_datasets(
