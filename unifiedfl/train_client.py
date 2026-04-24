@@ -12,8 +12,8 @@ Usage (Colab):
         --family t5 \
         --targets q v \
         --d-model 512 \
-        --splits-dir /content/drive/MyDrive/federated_qa_gnn/outputs/splits \
-        --output-dir /content/drive/MyDrive/federated_qa_gnn/outputs \
+        --splits-dir /content/drive/MyDrive/unifiedfl/outputs/splits \
+        --output-dir /content/drive/MyDrive/unifiedfl/outputs \
         --num-epochs 60
 
     # Resume from checkpoint:

@@ -10,11 +10,11 @@ Usage (Colab):
     #   from google.colab import drive; drive.mount('/content/drive')
 
     python train_federated.py \
-        --splits-dir /content/drive/MyDrive/federated_qa_gnn/outputs/splits \
+        --splits-dir /content/drive/MyDrive/unifiedfl/outputs/splits \
         --client "0:google/flan-t5-small:t5:q,v:512" \
         --client "1:facebook/bart-base:bart:q_proj,v_proj:768" \
         --client "2:allenai/led-base-16384:led:q_proj,v_proj:768" \
-        --output-dir /content/drive/MyDrive/federated_qa_gnn/outputs \
+        --output-dir /content/drive/MyDrive/unifiedfl/outputs \
         --num-rounds 20 \
         --local-epochs 3
 
