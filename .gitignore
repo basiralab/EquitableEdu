@@ -1,0 +1,30 @@
+# API keys — never commit these
+openai_api_key.py
+**/openai_api_key.py
+.env
+**/.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+dist/
+build/
+
+# Outputs & checkpoints
+outputs/
+**/outputs/
+fed_checkpoints/
+**/fed_checkpoints/
+*.pt
+*.ckpt
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# OS
+.DS_Store
+Thumbs.db
