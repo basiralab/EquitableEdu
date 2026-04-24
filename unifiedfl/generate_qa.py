@@ -32,7 +32,7 @@ OUTPUT FORMAT  (one JSON file per institution, a flat array of entries):
 
 USAGE EXAMPLE:
   import json
-  from data.generate_qa import generate_qa_for_context
+  from generate_qa import generate_qa_for_context
 
   API_KEY    = "sk-..."
   CLIENT_ID  = 2                          # your assigned institution ID
