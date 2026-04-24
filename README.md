@@ -1,1 +1,1 @@
-# UnifiedEduLoRA
+# EquitableEdu
